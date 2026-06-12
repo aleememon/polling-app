@@ -1,0 +1,1 @@
+ALTER TABLE "questions" ALTER COLUMN "is_mandatory" SET DEFAULT true;
