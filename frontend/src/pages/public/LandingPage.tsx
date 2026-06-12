@@ -20,6 +20,7 @@ export default function LandingPage() {
           <div className="hidden space-x-8 text-sm font-medium text-zinc-400 md:flex">
             <a href="#home" className="hover:text-white transition-colors">Home</a>
             <a href="#about" className="hover:text-white transition-colors">About</a>
+            <a href="#explore" className="hover:text-white transition-colors">Explore Polls</a>
             <a href="#features" className="hover:text-white transition-colors">Features</a>
             <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
           </div>
@@ -57,6 +58,8 @@ export default function LandingPage() {
             </div>
           </div>
           
+          
+
           {/* Hero Featured Live Poll Interactive Display Box */}
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
@@ -75,6 +78,68 @@ export default function LandingPage() {
               ))}
             </div>
           </div>
+        </div>
+      </section>
+    
+    {/* 🚀 NEW SECTION: PUBLIC DISCOVERY WALL */}
+      <section id="explore" className="border-t border-zinc-900 bg-zinc-900/10 py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          
+          {/* Header Block */}
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-widest text-blue-500">Live Stream</span>
+              <h2 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">Explore Public Polls</h2>
+              <p className="mt-2 text-zinc-400 text-sm">Cast your vote on active trending global questions right now.</p>
+            </div>
+          </div>
+
+          {/* Dynamic Responsive Grid Layout */}
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              {
+                id: "poll-1",
+                question: "Is AI tooling currently accelerating junior developers or making them dependent?",
+                status: "Live"
+              },
+              {
+                id: "poll-2",
+                question: "Should remote physical workspaces remain the primary standard for tech startups?",
+                status: "Live"
+              },
+              {
+                id: "poll-3",
+                question: "Which UI design trend stands out the most in contemporary web design?",
+                status: "Live"
+              }
+            ].map((publicPoll) => (
+              <div 
+                key={publicPoll.id} 
+                className="flex flex-col justify-between rounded-xl border border-zinc-900 bg-zinc-900/40 p-6 hover:border-zinc-800 transition-all group"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-4">
+                    <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-400">
+                      <span className="h-1 w-1 rounded-full bg-emerald-400" />
+                      {publicPoll.status}
+                    </span>
+                  </div>
+                  
+                  <h3 className="text-base font-bold text-zinc-200 group-hover:text-white transition-colors line-clamp-3 mb-6">
+                    {publicPoll.question}
+                  </h3>
+                </div>
+
+                <div className="flex items-center justify-between pt-4 border-t border-zinc-900/60 mt-auto">
+                  {/* Dynamic Action Button linking to your PollVote subpage router */}
+                  <Button asChild size="sm" variant="outline" className="h-8 border-zinc-800 hover:bg-blue-600 hover:border-blue-500 hover:text-white bg-transparent text-xs font-semibold">
+                    <Link to={`/poll/${publicPoll.id}`}>Vote &rarr;</Link>
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
         </div>
       </section>
 
