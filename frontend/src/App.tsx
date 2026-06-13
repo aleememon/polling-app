@@ -4,33 +4,41 @@ import Register from "./pages/auth/Register";
 import Login from "./pages/auth/Login";
 import Dashboard from "./pages/dashboard/Dashboard";
 import NotFound from "./pages/auth/NotFound";
+import CreatePoll from "./pages/dashboard/CreatePoll";
+import Analytics from "./pages/dashboard/Analytics";
 
 const App = () => {
   const router = createBrowserRouter([
     {
       path: "/",
-      element: <LandingPage />
+      element: <LandingPage />,
     },
     {
       path: "/register",
-      element: <Register />
+      element: <Register />,
     },
     {
       path: "/login",
-      element: <Login />
+      element: <Login />,
     },
     {
       path: "/dashboard",
-      element: <Dashboard />
-    }, 
+      element: <Dashboard />,
+    },
+    {
+      path: "/dashboard/create",
+      element: <CreatePoll />,
+    },
+    {
+      path: "/dashboard/analytics/:id",
+      element: <Analytics />
+    },
     {
       path: "*",
-      element: <NotFound />
-    }
-  ])
-  return (
-    <RouterProvider router={router} />
-  );
+      element: <NotFound />,
+    },
+  ]);
+  return <RouterProvider router={router} />;
 };
 
 export default App;
