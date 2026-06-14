@@ -19,7 +19,23 @@ export interface Poll {
   isPublished: boolean;
   expiresAt: string;
   createdAt: string;
-  question?: Question[];
+  questions?: Question[];
+}
+
+export interface PublicPoll {
+  id: string;
+  title: string;
+  expiresAt: string;
+  isPublished: boolean;
+  isAnonymous?: boolean;
+  questions?: Question[];
+}
+
+export interface PublicPollResponse {
+  success: boolean;
+  viewMode: "Results" | "Voting Form";
+  message?: string;
+  poll: PublicPoll;
 }
 
 export interface CreatePollPayload {
@@ -149,9 +165,11 @@ export const pollsApi = {
   },
 
   // public poll
-  getPublicPollById: async (pollId: string): Promise<ServerResponse<Poll>> => {
+  getPublicPollById: async (pollId: string): Promise<PublicPollResponse> => {
     try {
-      const response = await api.get(`/api/polls/${pollId}`);
+      const response = await api.get<PublicPollResponse>(
+        `/api/polls/${pollId}`,
+      );
 
       return response.data;
     } catch (error: any) {

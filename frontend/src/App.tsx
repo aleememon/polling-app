@@ -6,6 +6,7 @@ import Dashboard from "./pages/dashboard/Dashboard";
 import NotFound from "./pages/auth/NotFound";
 import CreatePoll from "./pages/dashboard/CreatePoll";
 import Analytics from "./pages/dashboard/Analytics";
+import VotingForm from "./pages/public/VotingForm";
 
 const App = () => {
   const router = createBrowserRouter([
@@ -32,6 +33,10 @@ const App = () => {
     {
       path: "/dashboard/analytics/:id",
       element: <Analytics />
+    },
+    {
+      path: "/poll/:id",
+      element: <VotingForm />
     },
     {
       path: "*",

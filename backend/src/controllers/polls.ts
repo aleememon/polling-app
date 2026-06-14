@@ -275,59 +275,113 @@ export const deletePoll = async (req: AuthenticatedRequest, res: Response) => {
 export const getPublicPollById = async (req: Request, res: Response) => {
   const pollId = req.params.id as string;
 
+  // 1. UUID Structural Validation Gate
   const uuidRegex =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(pollId)) {
-    return res.status(404).json({ error: "Poll not found" });
+    return res.status(404).json({ error: "Poll layout not found" });
   }
 
-  const [poll] = await db
-    .select()
-    .from(polls)
-    .where(eq(polls.id, pollId))
-    .limit(1);
+  try {
+    // 2. Fetch the target Poll from PostgreSQL
+    const [poll] = await db
+      .select()
+      .from(polls)
+      .where(eq(polls.id, pollId))
+      .limit(1);
 
-  if (!poll) {
-    return res.status(404).json({ error: "Poll not found" });
-  }
+    if (!poll) {
+      return res.status(404).json({ error: "Poll records missing." });
+    }
 
-  const currentDate = new Date();
-  if (currentDate > new Date(poll.expiresAt)) {
-    return res.status(400).json({ error: "Poll has expired" });
-  }
+    // 3. Draft Security Block: If it's a private draft, block public access entirely
+    if (!poll.isPublished) {
+      return res.status(403).json({ 
+        error: "This ballot structure is currently a private draft under review." 
+      });
+    }
 
-  if (poll.isPublished) {
+    // 4. Fetch all corresponding questions for this poll schema
+    const pollQuestions = await db
+      .select()
+      .from(questions)
+      .where(eq(questions.pollId, pollId));
+
+    // ⏱️ AUTOMATED CLOCK ASSESSMENT
+    const currentDate = new Date();
+    const hasExpired = currentDate > new Date(poll.expiresAt);
+
+    if (hasExpired) {
+      // 📊 MODE 2: POLL HAS EXPIRED -> Calculate aggregates correctly using your split schema
+      
+      // Find all parent response tracking rows connected to this poll
+      const parentResponses = await db
+        .select({ id: responses.id })
+        .from(responses)
+        .where(eq(responses.pollId, pollId));
+
+      const analyticsPayload = await Promise.all(
+        pollQuestions.map(async (q) => {
+          // Fetch child option answers written specifically for this question identifier
+          const currentQuestionAnswers = await db
+            .select()
+            .from(answers)
+            .where(eq(answers.questionId, q.id));
+
+          // Run a reduce matrix loop to tally the choice allocations cleanly based on q.options array
+          const choiceDistribution = q.options.reduce((acc: Record<string, number>, option: string) => {
+            acc[option] = currentQuestionAnswers.filter((a) => a.chosenOption === option).length;
+            return acc;
+          }, {});
+
+          return {
+            id: q.id,
+            text: q.text,
+            options: q.options,
+            isMandatory: q.isMandatory,
+            totalQuestionVotes: currentQuestionAnswers.length,
+            results: choiceDistribution, // e.g., { "Option A": 5, "Option B": 12 }
+          };
+        })
+      );
+
+      return res.status(200).json({
+        success: true,
+        viewMode: "Results", // 👈 Signals frontend to render visual chart progress bars
+        poll: {
+          id: poll.id,
+          title: poll.title,
+          isAnonymous: poll.isAnonymous,
+          expiresAt: poll.expiresAt,
+          totalBallotsCast: parentResponses.length, // Total unique parent submittals
+          analytics: analyticsPayload,
+        },
+      });
+    }
+
+    // 🗳️ MODE 1: POLL IS STILL ACTIVE -> Return standard voting inputs template
     return res.status(200).json({
       success: true,
-      viewMode: "Results",
-      message:
-        "This poll has been finalized by the creator. Displaying public results only.",
+      viewMode: "Voting Form", // 👈 Signals frontend to render choices form checkboxes
       poll: {
         id: poll.id,
         title: poll.title,
-        isPublished: poll.isPublished,
+        isAnonymous: poll.isAnonymous,
         expiresAt: poll.expiresAt,
+        isPublished: poll.isPublished,
+        questions: pollQuestions.map((q) => ({
+          id: q.id,
+          text: q.text,
+          isMandatory: q.isMandatory,
+          options: q.options, // Already parsed native PostgreSQL array layout
+        })),
       },
     });
+
+  } catch (error: any) {
+    console.error("Drizzle Query Compilation Crash:", error);
+    return res.status(500).json({ error: "Internal cluster table aggregation failure." });
   }
-
-  const pollQuestions = await db
-    .select()
-    .from(questions)
-    .where(eq(questions.pollId, pollId));
-
-  return res.status(200).json({
-    success: true,
-    viewMode: "Voting Form",
-    poll: {
-      id: poll.id,
-      title: poll.title,
-      isAnonymous: poll.isAnonymous,
-      expiresAt: poll.expiresAt,
-      isPublished: poll.isPublished,
-      questions: pollQuestions,
-    },
-  });
 };
 
 export const submitPollResponse = async (req: Request, res: Response) => {
@@ -344,7 +398,7 @@ export const submitPollResponse = async (req: Request, res: Response) => {
     return res.status(404).json({ error: "Poll not found" });
   }
 
-  if (new Date() > new Date(poll.expiresAt) || poll.isPublished) {
+  if (new Date() > new Date(poll.expiresAt) || !poll.isPublished) {
     return res
       .status(400)
       .json({ success: false, error: "Submissions are closed for this poll." });
