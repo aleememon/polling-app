@@ -312,7 +312,7 @@ export const getPublicPollById = async (req: Request, res: Response) => {
     const hasExpired = currentDate > new Date(poll.expiresAt);
 
     if (hasExpired) {
-      // 📊 MODE 2: POLL HAS EXPIRED -> Calculate aggregates correctly using your split schema
+      //  MODE 2: POLL HAS EXPIRED -> Calculate aggregates correctly using your split schema
       
       // Find all parent response tracking rows connected to this poll
       const parentResponses = await db
@@ -347,7 +347,7 @@ export const getPublicPollById = async (req: Request, res: Response) => {
 
       return res.status(200).json({
         success: true,
-        viewMode: "Results", // 👈 Signals frontend to render visual chart progress bars
+        viewMode: "Results", //Signals frontend to render visual chart progress bars
         poll: {
           id: poll.id,
           title: poll.title,
@@ -359,10 +359,9 @@ export const getPublicPollById = async (req: Request, res: Response) => {
       });
     }
 
-    // 🗳️ MODE 1: POLL IS STILL ACTIVE -> Return standard voting inputs template
     return res.status(200).json({
       success: true,
-      viewMode: "Voting Form", // 👈 Signals frontend to render choices form checkboxes
+      viewMode: "Voting Form", // Signals frontend to render choices form checkboxes
       poll: {
         id: poll.id,
         title: poll.title,
