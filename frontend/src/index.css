@@ -1,1 +1,10 @@
 @import "tailwindcss";
+
+@layer base {
+  html {
+    
+    @apply scroll-smooth;
+    
+    scroll-padding-top: 4rem; 
+  }
+}

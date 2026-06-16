@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { pollsApi } from "@/api/polls";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const VotingForm = () => {
   const { id } = useParams<{ id: string }>();
@@ -56,13 +57,13 @@ const VotingForm = () => {
     const operationalQuestions = poll.questions || [];
 
     if (operationalQuestions.length === 0) {
-      alert("No question entries found inside this active layout window.");
+      toast.error("No question entries found inside this active layout window.");
       return;
     }
 
     for (const q of operationalQuestions) {
       if (!selectedOptions[q.id]) {
-        alert(`Submission halted: Question "${q.text}" requires a selection.`);
+        toast.error(`Submission halted: Question "${q.text}" requires a selection.`);
         return;
       }
     }
@@ -75,13 +76,13 @@ const VotingForm = () => {
       }));
 
       await pollsApi.submitPollResponse(poll.id, { answers: answersPayload });
-      alert("Ballot cast successfully! Your choices have been registered. ⚡");
+      toast.success("Ballot cast successfully! Your choices have been registered. ⚡");
       
       // Auto-reload window frame to flip interface to 'Results' if expiration rules shift
       window.location.reload();
     } catch (err: any) {
       const serverError = err.response?.data?.error || err.message || "Failed to commit tokens.";
-      alert(`Transaction Rejected: ${serverError}`);
+      toast.error(`Transaction Rejected: ${serverError}`);
     } finally {
       setIsSubmitting(false);
     }

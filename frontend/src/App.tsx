@@ -1,4 +1,5 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { Toaster } from "sonner";
 import LandingPage from "./pages/public/LandingPage";
 import Register from "./pages/auth/Register";
 import Login from "./pages/auth/Login";
@@ -9,7 +10,6 @@ import Analytics from "./pages/dashboard/Analytics";
 import VotingForm from "./pages/public/VotingForm";
 import PublicPolls from "./pages/public/PublicPolls";
 import ProtectedRoute from "./pages/protected-route-outlet/ProtectedRoute";
-
 const router = createBrowserRouter([
   {
     // Public Access Paths
@@ -32,7 +32,7 @@ const router = createBrowserRouter([
     path: "/public-polls",
     element: <PublicPolls />,
   },
-  
+
   // 🛡️ Guard Gate Wrapper Layout
   {
     element: <ProtectedRoute />,
@@ -51,7 +51,7 @@ const router = createBrowserRouter([
       },
     ],
   },
-  
+
   // 404 Fallback Path Routing
   {
     path: "*",
@@ -61,7 +61,13 @@ const router = createBrowserRouter([
 
 const App = () => {
   // Clear out the orphaned `<Routes>` wrappers and use the router provider config injection
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      <RouterProvider router={router} />
+
+      <Toaster theme="dark" position="bottom-right" closeButton richColors />
+    </>
+  );
 };
 
 export default App;

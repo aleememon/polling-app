@@ -1,5 +1,6 @@
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {toast} from "sonner";
 import * as z from "zod";
 import { useNavigate, Link } from "react-router-dom";
 import { pollsApi } from "@/api/polls";
@@ -68,7 +69,7 @@ const CreatePoll = () => {
       };
       
       await pollsApi.createPoll(payload);
-      alert("Poll structure successfully deployed into database draft status! 🚀");
+      toast.success("Poll structure successfully deployed into database draft status! 🚀");
       navigate("/dashboard");
     } catch (err: any) {
       setServerError(err.message);
