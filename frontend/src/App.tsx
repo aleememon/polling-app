@@ -7,6 +7,7 @@ import NotFound from "./pages/auth/NotFound";
 import CreatePoll from "./pages/dashboard/CreatePoll";
 import Analytics from "./pages/dashboard/Analytics";
 import VotingForm from "./pages/public/VotingForm";
+import PublicPolls from "./pages/public/PublicPolls";
 
 const App = () => {
   const router = createBrowserRouter([
@@ -37,6 +38,10 @@ const App = () => {
     {
       path: "/poll/:id",
       element: <VotingForm />
+    },
+    {
+      path: "/public-polls",
+      element: <PublicPolls />  
     },
     {
       path: "*",
