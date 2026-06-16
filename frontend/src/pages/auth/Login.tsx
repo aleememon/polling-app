@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 
-// 1. Define the validation schema using Zod
+// Login Schema
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
@@ -21,7 +21,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // 2. Initialize react-hook-form
+  // Intialize React Hook Form
   const {
     register,
     handleSubmit,
@@ -35,10 +35,8 @@ const Login = () => {
     setIsLoading(true);
     setServerError(null);
     try {
-      // Fires the network request to POST /api/auth/login and saves the token
       await authApi.login(data.email, data.password);
 
-      // Success! Send them directly to their private dashboard
       navigate("/dashboard");
     } catch (err: any) {
       setServerError(err.message);

@@ -33,7 +33,7 @@ const router = createBrowserRouter([
     element: <PublicPolls />,
   },
 
-  // 🛡️ Guard Gate Wrapper Layout
+  // Protected Routes
   {
     element: <ProtectedRoute />,
     children: [
@@ -52,7 +52,7 @@ const router = createBrowserRouter([
     ],
   },
 
-  // 404 Fallback Path Routing
+  
   {
     path: "*",
     element: <NotFound />,
@@ -60,7 +60,6 @@ const router = createBrowserRouter([
 ]);
 
 const App = () => {
-  // Clear out the orphaned `<Routes>` wrappers and use the router provider config injection
   return (
     <>
       <RouterProvider router={router} />

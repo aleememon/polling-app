@@ -5,10 +5,10 @@ const NotFound = () => {
   const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-zinc-950 text-white font-sans antialiased flex flex-col justify-between relative overflow-hidden">
-      {/* Background Decorative Flare Element */}
+      
       <div className="absolute top-[30%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-600/5 rounded-full blur-3xl pointer-events-none" />
 
-      {/* 1. MINIMAL TOP HEADER */}
+      
       <header className="border-b border-zinc-900 bg-zinc-950/40 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link
@@ -24,9 +24,8 @@ const NotFound = () => {
         </div>
       </header>
 
-      {/* 2. CORE ERROR CONTENT */}
+      
       <main className="mx-auto max-w-md px-4 text-center py-20 relative z-10 flex-1 flex flex-col justify-center">
-        {/* Massive Styled Error Code */}
         <h1 className="text-8xl font-black tracking-tighter text-zinc-900 select-none">
           404
         </h1>
@@ -41,7 +40,6 @@ const NotFound = () => {
           lock.
         </p>
 
-        {/* Action Button Controls Row */}
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
           <Button
             onClick={() => navigate(-1)}
@@ -60,7 +58,6 @@ const NotFound = () => {
         </div>
       </main>
 
-      {/* 3. FOOTER ANCHOR */}
       <footer className="border-t border-zinc-900 bg-zinc-950/20 py-8 text-center text-[11px] text-zinc-600 font-mono">
         <div>SYSTEM_LOG: INVALID_REQUEST_URI_ROUTE_EXCEPTION</div>
       </footer>

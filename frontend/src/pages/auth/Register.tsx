@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 
-// 1. Define the validation schema using Zod
+// Register Schema
 const registerSchema = z.object({
   name: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Please enter a valid email address"),
