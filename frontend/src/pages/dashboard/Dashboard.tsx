@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { AUTH_TOKEN_KEY } from "@/api/client";
+import { socket } from "@/utils/socket";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -44,27 +45,34 @@ const Dashboard = () => {
   const handleLogout = () => {
     try {
       localStorage.removeItem(AUTH_TOKEN_KEY);
-      
       toast.success("Logged out successfully. Secure session terminated.");
-      
       navigate("/", { replace: true });
     } catch (err) {
       toast.error("An error occurred during session teardown.");
     }
-  }
+  };
 
   // 🚀 Handshake function talking directly to your publishPoll endpoint
   const handlePublish = async (id: string) => {
     try {
+      // A. Hit the backend REST API to update the database state
       await pollsApi.publishPoll(id);
+      
+      // B. Update local state instantly to swap the badge from "Private Draft" to "Public Live"
       setPolls((prev) =>
         prev.map((p) => (p.id === id ? { ...p, isPublished: true } : p)),
       );
+      
       toast.success(
         "Ballot deployed live! WebSocket events broadcasted successfully. 🌐",
       );
+
+      // C. Broadcast the status update to the WebSocket server cluster
+      socket.emit("poll_published", { pollId: id });
+      
     } catch (err: any) {
-      toast.success(err.message);
+      // 🟢 FIX: Corrected from toast.success to toast.error
+      toast.error(err.message || "Failed to deploy poll live.");
     }
   };
 
@@ -121,21 +129,20 @@ const Dashboard = () => {
 
           <div className="flex items-center justify-between gap-4 px-4">
             <Button
-            asChild
-            size="sm"
-            className="bg-blue-600 hover:bg-blue-500 font-bold"
-          >
-            <Link to="/dashboard/create">+ Create New Poll</Link>
-          </Button>
+              asChild
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-500 font-bold"
+            >
+              <Link to="/dashboard/create">+ Create New Poll</Link>
+            </Button>
 
-          <button
+            <button
               onClick={handleLogout}
               title="Sign out of workspace"
               className="p-2 rounded-lg border border-zinc-800 bg-zinc-900/30 text-zinc-400 hover:text-red-400 hover:border-red-500/20 hover:bg-red-500/5 transition-all duration-200 flex items-center justify-center cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
             </button>
-
           </div>
         </div>
       </header>
@@ -148,8 +155,7 @@ const Dashboard = () => {
             Your Active Workspace
           </h1>
           <p className="text-zinc-400 text-sm mt-1">
-            Monitor, verify parameters, and view analytics for your custom
-            polls.
+            Monitor, verify parameters, and view analytics for your custom polls.
           </p>
         </div>
 
@@ -196,7 +202,6 @@ const Dashboard = () => {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {polls.map((poll) => {
               const expired = isExpired(poll.expiresAt);
-              // Check if THIS specific poll was clicked
               const isThisCardCopied = copiedPollId === poll.id;
 
               return (
@@ -246,7 +251,7 @@ const Dashboard = () => {
                           )}
                         </button>
                         <span className="text-[10px] font-mono text-zinc-600">
-                          ID: {poll.slug.slice(-6)}
+                          ID: {poll.slug ? poll.slug.slice(-6) : poll.id.slice(-6)}
                         </span>
                       </div>
                     </div>
@@ -262,45 +267,47 @@ const Dashboard = () => {
                   </div>
 
                   {/* Operational Controls Footer Row */}
-                  <div className="flex items-center justify-between gap-3 pt-4 border-t border-zinc-900/60 mt-auto">
-                    <button
-                      onClick={() => setPollIdToDelete(poll.id)}
-                      className="text-xs text-zinc-500 hover:text-red-400 font-semibold transition-colors bg-transparent border-0 cursor-pointer"
-                    >
-                      Delete
-                    </button>
-
-                    <div className="flex items-center gap-2">
-                      <Button
-                        asChild
-                        size="sm"
-                        variant="outline"
-                        className="h-8 border-zinc-800 text-xs font-semibold hover:bg-zinc-900 bg-transparent text-zinc-300"
+                  <div className="flex flex-col gap-3 pt-4 border-t border-zinc-900/60 mt-auto">
+                    <div className="flex items-center justify-between gap-3 w-full">
+                      <button
+                        onClick={() => setPollIdToDelete(poll.id)}
+                        className="text-xs text-zinc-500 hover:text-red-400 font-semibold transition-colors bg-transparent border-0 cursor-pointer"
                       >
-                        <Link to={`/poll/${poll.id}`}>View External</Link>
-                      </Button>
+                        Delete
+                      </button>
 
-                      <Button
-                        asChild
-                        size="sm"
-                        className="h-8 bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white"
-                      >
-                        <Link to={`/dashboard/analytics/${poll.id}`}>
-                          Analytics
-                        </Link>
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          asChild
+                          size="sm"
+                          variant="outline"
+                          className="h-8 border-zinc-800 text-xs font-semibold hover:bg-zinc-900 bg-transparent text-zinc-300"
+                        >
+                          <Link to={`/poll/${poll.id}`}>View External</Link>
+                        </Button>
+
+                        <Button
+                          asChild
+                          size="sm"
+                          className="h-8 bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white"
+                        >
+                          <Link to={`/dashboard/analytics/${poll.id}`}>
+                            Analytics
+                          </Link>
+                        </Button>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Dynamic Publish Call-to-Action Bar */}
-                  {!poll.isPublished && !expired && (
-                    <Button
-                      onClick={() => handlePublish(poll.id)}
-                      className="w-full mt-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs py-2 tracking-wide uppercase shadow-md transition-all duration-200"
-                    >
-                      ⚡ Deploy Poll to Live Stream
-                    </Button>
-                  )}
+                    {/* Dynamic Publish Call-to-Action Bar */}
+                    {!poll.isPublished && !expired && (
+                      <Button
+                        onClick={() => handlePublish(poll.id)}
+                        className="w-full mt-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs py-2 tracking-wide uppercase shadow-md transition-all duration-200"
+                      >
+                        ⚡ Deploy Poll to Live Stream
+                      </Button>
+                    )}
+                  </div>
                 </div>
               );
             })}

@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { pollsApi } from "@/api/polls";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { socket } from "@/utils/socket";
 
 const VotingForm = () => {
   const { id } = useParams<{ id: string }>();
 
-  // Tracks whether we are rendering an active submission form or post-expired analytics
   const [viewMode, setViewMode] = useState<"Voting Form" | "Results" | null>(null);
   const [poll, setPoll] = useState<any | null>(null);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
@@ -15,6 +15,61 @@ const VotingForm = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // 1. Establish the Real-Time WebSocket Channel Loop
+  useEffect(() => {
+    if (!id) return;
+
+    // A. Request the backend to subscribe this socket connection to the target room stream
+    socket.emit("join_room", `poll_${id}`);
+
+    // B. Setup the socket channel tracking listener for database updates
+    socket.on("live_analytics_update", (data) => {
+      if (data.pollId === id) {
+        // console.log("⚡ Authoritative live state synchronization snapshot received:", data.outcome);
+        
+        // Dynamic State Merging Layer
+        setPoll((prevPoll: any) => {
+          if (!prevPoll) return prevPoll;
+
+          // If your analytics view maps over an array, update those totals dynamically
+          const updatedAnalytics = prevPoll.analytics?.map((questionItem: any) => {
+            // Find the matching answers recorded inside this transaction outcome block
+            const matchingAnswers = data.outcome.recordedAnswers.filter(
+              (ans: any) => ans.questionId === questionItem.id
+            );
+
+            if (matchingAnswers.length === 0) return questionItem;
+
+            const newResults = { ...(questionItem.results || {}) };
+            
+            // Increment options matching what was pushed inside the database transaction
+            matchingAnswers.forEach((ans: any) => {
+              newResults[ans.chosenOption] = (newResults[ans.chosenOption] || 0) + 1;
+            });
+
+            return {
+              ...questionItem,
+              totalQuestionVotes: questionItem.totalQuestionVotes + matchingAnswers.length,
+              results: newResults,
+            };
+          });
+
+          return {
+            ...prevPoll,
+            totalBallotsCast: (Number(prevPoll.totalBallotsCast) || 0) + 1,
+            analytics: updatedAnalytics || prevPoll.analytics,
+          };
+        });
+      }
+    });
+
+    // C. Clean up socket events when the component unmounts to prevent pipeline leaks
+    return () => {
+      socket.off("live_analytics_update");
+    };
+  }, [id]);
+
+  // 2. Fetch Initial Structural System Layout State
   useEffect(() => {
     if (!id) return;
 
@@ -27,11 +82,9 @@ const VotingForm = () => {
           return;
         }
 
-        // Catch the reactive view mode flag directly from the backend server context
         setViewMode(response.viewMode);
         setPoll(response.poll);
       } catch (err: any) {
-        // Safe extraction of server-thrown rejections
         const serverMsg = err.response?.data?.error || err.message || "Failed to establish stream link.";
         setError(serverMsg);
       } finally {
@@ -43,7 +96,7 @@ const VotingForm = () => {
   }, [id]);
 
   const handleRadioSelect = (questionId: string, optionText: string) => {
-    if (viewMode === "Results") return; // Prevent selection changes if viewing static metrics
+    if (viewMode === "Results") return;
     setSelectedOptions((prev) => ({
       ...prev,
       [questionId]: optionText,
@@ -75,11 +128,13 @@ const VotingForm = () => {
         chosenOption,
       }));
 
+      // A. Standard HTTP API invocation. This fires the backend transaction routine.
       await pollsApi.submitPollResponse(poll.id, { answers: answersPayload });
       toast.success("Ballot cast successfully! Your choices have been registered. ⚡");
       
-      // Auto-reload window frame to flip interface to 'Results' if expiration rules shift
-      window.location.reload();
+      // B. Swap layout to viewing results directly without executing a full page window refresh!
+      setViewMode("Results");
+      
     } catch (err: any) {
       const serverError = err.response?.data?.error || err.message || "Failed to commit tokens.";
       toast.error(`Transaction Rejected: ${serverError}`);
@@ -133,7 +188,6 @@ const VotingForm = () => {
       </header>
 
       <main className="mx-auto max-w-3xl px-4 py-16">
-        {/* TITLE JUMBOTRON CARD BLOCK */}
         <div className="space-y-2 border-b border-zinc-900 pb-6 mb-10">
           <h1 className="text-3xl font-black tracking-tight text-white">{poll.title}</h1>
           <p className="text-xs font-mono text-zinc-500 uppercase tracking-wider">
@@ -144,11 +198,7 @@ const VotingForm = () => {
           </p>
         </div>
 
-        {/* 🔀 INTERFACE SWITCH LAYER */}
         {viewMode === "Results" ? (
-          /* ============================================================ */
-          /* 📊 RENDERING TYPE A: HISTORICAL BAR CHARTS (POST-EXPIRATION) */
-          /* ============================================================ */
           <div className="space-y-8">
             {poll.analytics?.map((item: any, idx: number) => (
               <div key={item.id} className="bg-zinc-900/20 border border-zinc-900 rounded-xl p-6 space-y-6">
@@ -173,7 +223,6 @@ const VotingForm = () => {
                             {count} {count === 1 ? "vote" : "votes"} ({percentage}%)
                           </span>
                         </div>
-                        {/* Dynamic custom CSS ratio bar */}
                         <div className="h-2.5 w-full bg-zinc-950 rounded-full overflow-hidden border border-zinc-900/60">
                           <div 
                             className="h-full bg-gradient-to-r from-blue-600 to-indigo-500 rounded-full transition-all duration-500"
@@ -188,9 +237,6 @@ const VotingForm = () => {
             ))}
           </div>
         ) : (
-          /* ============================================================ */
-          /* 🗳️ RENDERING TYPE B: INTERACTIVE BALLOT FIELDS (ACTIVE POLL) */
-          /* ============================================================ */
           <form onSubmit={handleSubmitVotes} className="space-y-10">
             <div className="space-y-8">
               {poll.questions?.map((q: any, qIndex: number) => (
