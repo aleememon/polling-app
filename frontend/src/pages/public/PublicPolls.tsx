@@ -4,7 +4,6 @@ import { pollsApi } from "@/api/polls";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-// Define structural parameters for incoming poll array rows
 interface SimplePollSummary {
   id: string;
   title: string;
@@ -23,7 +22,6 @@ const PublicPolls = () => {
   useEffect(() => {
     const fetchAllFeedPolls = async () => {
       try {
-        // Replace this with your actual global index fetch API route if named differently
         const response = await pollsApi.getPublicPolls(); 
         setPolls(response.polls || []);
       } catch (err: any) {
@@ -37,7 +35,6 @@ const PublicPolls = () => {
     fetchAllFeedPolls();
   }, []);
 
-  // 🔍 Dynamic Query Filtering & State Evaluation Routine
   const filteredPolls = polls.filter((poll) => {
     const matchesSearch = poll.title.toLowerCase().includes(searchQuery.toLowerCase());
     const isExpired = new Date() > new Date(poll.expiresAt);

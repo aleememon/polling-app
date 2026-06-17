@@ -7,7 +7,7 @@ import { pollsApi } from "@/api/polls";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
-// 1. Zod Validation Schema matching your backend createPollSchema
+
 const pollValidationSchema = z.object({
   title: z.string().min(5, "Poll title must be at least 5 characters long"),
   isAnonymous: z.boolean().default(false).optional(),
@@ -28,7 +28,6 @@ const CreatePoll = () => {
   const [serverError, setServerError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // 2. Setup react-hook-form
   const {
     register,
     control,
@@ -41,27 +40,23 @@ const CreatePoll = () => {
       isAnonymous: false,
       expiresAt: "",
       questions: [
-        { text: "", isMandatory: true, options: ["", ""] } // Start with 1 default question & 2 blank option slots
+        { text: "", isMandatory: true, options: ["", ""] } 
       ],
     },
   });
 
-  // 3. Dynamic Question Array Controller
   const { fields: questionFields, append: appendQuestion, remove: removeQuestion } = useFieldArray({
     control,
     name: "questions",
   });
 
-  // 4. Form Submission Handler
   const onSubmit = async (data: PollFormValues) => {
     setIsLoading(true);
     setServerError(null);
     try {
-      // Convert HTML datetime-local string format directly into ISO format for Drizzle
       const payload = {
         ...data,
         expiresAt: new Date(data.expiresAt).toISOString(),
-        // Filter out empty strings from options array
         questions: data.questions.map(q => ({
           ...q,
           options: q.options.filter(opt => opt.trim() !== "")

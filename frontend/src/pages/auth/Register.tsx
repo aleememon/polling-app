@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 
-// Register Schema
 const registerSchema = z.object({
   name: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Please enter a valid email address"),
@@ -22,7 +21,6 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // 2. Initialize react-hook-form
   const {
     register,
     handleSubmit,
@@ -31,7 +29,6 @@ const Register = () => {
     resolver: zodResolver(registerSchema),
   });
 
-  // 3. Handle Form Submission
   const onSubmit = async (data: RegisterValues) => {
     setIsLoading(true);
     setServerError(null);

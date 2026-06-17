@@ -26,7 +26,6 @@ const Dashboard = () => {
   const [copiedPollId, setCopiedPollId] = useState<string | null>(null);
   const [pollIdToDelete, setPollIdToDelete] = useState<string | null>(null);
 
-  // 1. Fetch polls on component mount
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
@@ -52,13 +51,10 @@ const Dashboard = () => {
     }
   };
 
-  // 🚀 Handshake function talking directly to your publishPoll endpoint
   const handlePublish = async (id: string) => {
     try {
-      // A. Hit the backend REST API to update the database state
       await pollsApi.publishPoll(id);
       
-      // B. Update local state instantly to swap the badge from "Private Draft" to "Public Live"
       setPolls((prev) =>
         prev.map((p) => (p.id === id ? { ...p, isPublished: true } : p)),
       );
@@ -67,16 +63,13 @@ const Dashboard = () => {
         "Ballot deployed live! WebSocket events broadcasted successfully. 🌐",
       );
 
-      // C. Broadcast the status update to the WebSocket server cluster
       socket.emit("poll_published", { pollId: id });
       
     } catch (err: any) {
-      // 🟢 FIX: Corrected from toast.success to toast.error
       toast.error(err.message || "Failed to deploy poll live.");
     }
   };
 
-  // 2. Handle instant UI removal on successful deletion
   const handleDelete = async () => {
     if (!pollIdToDelete) return;
 
@@ -95,10 +88,8 @@ const Dashboard = () => {
     return new Date() > new Date(expiryDate);
   };
 
-  // 🟢 FIX: Target copy confirmation state to a single row item channel
   const handleCopySlugToClipboard = async (id: string) => {
     try {
-      // Build an absolute path link string matching your production frontend routes layout
       const dynamicShareUrl = `${window.location.origin}/poll/${id}`;
       await navigator.clipboard.writeText(dynamicShareUrl);
       setCopiedPollId(id);

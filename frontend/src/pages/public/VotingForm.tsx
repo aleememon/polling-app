@@ -15,25 +15,18 @@ const VotingForm = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 1. Establish the Real-Time WebSocket Channel Loop
   useEffect(() => {
     if (!id) return;
 
-    // A. Request the backend to subscribe this socket connection to the target room stream
     socket.emit("join_room", `poll_${id}`);
 
-    // B. Setup the socket channel tracking listener for database updates
     socket.on("live_analytics_update", (data) => {
       if (data.pollId === id) {
-        // console.log("⚡ Authoritative live state synchronization snapshot received:", data.outcome);
         
-        // Dynamic State Merging Layer
         setPoll((prevPoll: any) => {
           if (!prevPoll) return prevPoll;
 
-          // If your analytics view maps over an array, update those totals dynamically
           const updatedAnalytics = prevPoll.analytics?.map((questionItem: any) => {
-            // Find the matching answers recorded inside this transaction outcome block
             const matchingAnswers = data.outcome.recordedAnswers.filter(
               (ans: any) => ans.questionId === questionItem.id
             );
@@ -42,7 +35,6 @@ const VotingForm = () => {
 
             const newResults = { ...(questionItem.results || {}) };
             
-            // Increment options matching what was pushed inside the database transaction
             matchingAnswers.forEach((ans: any) => {
               newResults[ans.chosenOption] = (newResults[ans.chosenOption] || 0) + 1;
             });
@@ -63,13 +55,11 @@ const VotingForm = () => {
       }
     });
 
-    // C. Clean up socket events when the component unmounts to prevent pipeline leaks
     return () => {
       socket.off("live_analytics_update");
     };
   }, [id]);
 
-  // 2. Fetch Initial Structural System Layout State
   useEffect(() => {
     if (!id) return;
 
@@ -128,11 +118,9 @@ const VotingForm = () => {
         chosenOption,
       }));
 
-      // A. Standard HTTP API invocation. This fires the backend transaction routine.
       await pollsApi.submitPollResponse(poll.id, { answers: answersPayload });
       toast.success("Ballot cast successfully! Your choices have been registered. ⚡");
       
-      // B. Swap layout to viewing results directly without executing a full page window refresh!
       setViewMode("Results");
       
     } catch (err: any) {
